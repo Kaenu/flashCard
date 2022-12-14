@@ -1,142 +1,95 @@
-import * as R from "ramda";
+import * as R from 'ramda';
 
-export const MSGS = {
-  LOCATION_INPUT: "LOCATION_INPUT",
-  ADD_LOCATION: "ADD_LOCATION",
-  REMOVE_LOCATION: "REMOVE_LOCATION",
-  HTTP_SUCCESS: "HTTP_SUCCESS",
-  HTTP_ERROR: "HTTP_ERROR",
-  CLEAR_ERROR: "CLEAR_ERROR",
-  TOOGLE_LOCATION: "TOOGLE_LOCATION",
+const MSGS = {
+  SHOW_FORM: 'SHOW_FORM',
+  FRONT_INPUT: 'FRONT_INPUT',
+  BACK_INPUT: 'BACK_INPUT',
+  SAVE_FRONT: 'SAVE_FRONT',
+  DELETE_CARD: 'DELETE_CARD',
+  UPDATE_BACK: 'UPDATE_BACK',
+  SAVE_BACK: 'SAVE_BACK'
 };
 
-const APPID = "88ee15a329c957d8d083d331cbf60491";
-
-function weatherUrl(city) {
-  return `http://api.openweathermap.org/data/2.5/weather?q=${encodeURI(city)}&units=metric&APPID=${APPID}`;
-}
-
-export function locationInputMsg(location) {
+export function showFormMsg(showForm) {
   return {
-    type: MSGS.LOCATION_INPUT,
-    location,
+    type: MSGS.SHOW_FORM,
+    showForm,
   };
 }
 
-export const addLocationMsg = {
-  type: MSGS.ADD_LOCATION,
-};
-
-export function removeLocationMsg(id) {
+export function frontInputMsg(description) {
   return {
-    type: MSGS.REMOVE_LOCATION,
+    type: MSGS.FRONT_INPUT,
+    description,
+  };
+}
+
+export function backInputMsg(back) {
+  return {
+    type: MSGS.BACK_INPUT,
+    back,
+  };
+}
+
+export const saveFrontMsg = { type: MSGS.SAVE_FRONT };
+export const saveBackMsg = { type: MSGS.SAVE_BACK };
+
+export function deleteCardMsg(id) {
+  return {
+    type: MSGS.DELETE_CARD,
     id,
   };
 }
-
-const httpSuccessMsg = R.curry((id, response) => ({
-  type: MSGS.HTTP_SUCCESS,
-  id,
-  response,
-}));
-
-function httpErrorMsg(error) {
-  return {
-    type: MSGS.HTTP_ERROR,
-    error,
-  };
-}
-
-export function toggleLocationMsg(id) {
-  return {
-    type: MSGS.TOOGLE_LOCATION,
-    id,
-  };
-}
-
-export const clearErrorMsg = {
-  type: MSGS.CLEAR_ERROR,
-};
 
 function update(msg, model) {
   switch (msg.type) {
-    case MSGS.LOCATION_INPUT: {
-      const { location } = msg;
-      return { ...model, location };
+    case MSGS.SHOW_FORM: {
+      const { showForm } = msg;
+      return { ...model, showForm, description: '', };
     }
-    case MSGS.ADD_LOCATION: {
-      const { nextId, location, locations } = model;
-      const newLocation = {
-        id: nextId,
-        name: location,
-        temp: "?",
-        low: "?",
-        high: "?",
-      };
-      const updatedLocations = R.prepend(newLocation, locations);
-      return [
-        {
-          ...model,
-          location: "",
-          locations: updatedLocations,
-          nextId: nextId + 1,
-        },
-        {
-          request: { url: weatherUrl(location) },
-          successMsg: httpSuccessMsg(nextId),
-          errorMsg: httpErrorMsg,
-        },
-      ];
+    case MSGS.FRONT_INPUT: {
+      const { description } = msg;
+      return { ...model, description };
     }
-    case MSGS.REMOVE_LOCATION: {
+    case MSGS.BACK_INPUT: {
+      const { back } = msg;
+      return { ...model, back };
+    }
+    case MSGS.SAVE_FRONT: {
+      const updatedModel = add(msg, model);
+      return updatedModel;
+    }
+    case MSGS.SAVE_BACK: {
+      const updatedModel = add(msg, model);
+      return updatedModel;
+    }
+    case MSGS.DELETE_CARD: {
       const { id } = msg;
-      const { locations } = model;
-      const updatedLocations = R.reject(R.propEq("id", id), locations);
-      return { ...model, locations: updatedLocations };
+      const cards = R.filter(
+        card => card.id !== id
+      , model.cards);
+      return { ...model, cards };
     }
-    case MSGS.HTTP_SUCCESS: {
-      const { id, response } = msg;
-      const { locations } = model;
-      const { temp, temp_min, temp_max } = R.pathOr({}, ["data", "main"], response);
-      const updatedLocations = R.map((location) => {
-        if (location.id === id) {
-          return {
-            ...location,
-            temp: Math.round(temp),
-            low: Math.round(temp_min),
-            high: Math.round(temp_max),
-          };
-        }
-        return location;
-      }, locations);
-      return {
-        ...model,
-        locations: updatedLocations,
-      };
-    }
-    case MSGS.HTTP_ERROR: {
-      const { error } = msg;
-      return { ...model, error: error.message };
-    }
-    case MSGS.CLEAR_ERROR: {
-      return { ...model, error: null };
-    }
-    case MSGS.TOOGLE_LOCATION: {
-      const { id } = msg;
-      const { locations } = model;
-      const updatedLocations = R.map((location) => {
-        if (location.id === id) {
-          return {
-            ...location,
-            isActive: !location.isActive,
-          };
-        }
-        return location;
-      }, locations);
-      return { ...model, locations: updatedLocations };
+    case MSGS.UPDATE_BACK: {
+      const { description } = msg;
+      return { ...model, description };
     }
   }
   return model;
+}
+
+function add(msg, model) {
+  const { nextId, description, back } = model;
+  const card = { id: nextId, description, back };
+  const cards = [...model.cards, card]
+  return {
+    ...model,
+    cards,
+    nextId: nextId + 1,
+    description: '',
+    back: '',
+    showForm: false,
+  };
 }
 
 export default update;
