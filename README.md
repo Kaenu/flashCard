@@ -15,3 +15,6 @@ HowTo:
 
 Was funktioniert nicht?:
 - Sortieren nach Score funktioniert nicht.
+
+Logo:
+- https://www.cleanpng.com/png-educational-flash-cards-nhl-19-video-games-archive-7011717/
