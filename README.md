@@ -13,4 +13,4 @@ HowTo:
 - Editieren funktioniert nachdem man auf Show Answer gedrückt hat und die Antwort eingeblendet wurde mit einem Doppelklick in das Feld in der die Frage/Antwort steht.
 
 Was funktioniert nicht?:
-- Sortieren funktioniert nicht.
+- Sortieren nach Score funktioniert nicht.
