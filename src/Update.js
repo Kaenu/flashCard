@@ -1,95 +1,134 @@
-import * as R from 'ramda';
+const R = require('ramda');
 
 const MSGS = {
   SHOW_FORM: 'SHOW_FORM',
-  FRONT_INPUT: 'FRONT_INPUT',
-  BACK_INPUT: 'BACK_INPUT',
-  SAVE_FRONT: 'SAVE_FRONT',
+  DESCRIPTION_INPUT: 'DESCRIPTION_INPUT',
+  ANSWER_INPUT: 'ANSWER_INPUT',
+  SAVE_CARD: 'SAVE_CARD',
   DELETE_CARD: 'DELETE_CARD',
-  UPDATE_BACK: 'UPDATE_BACK',
-  SAVE_BACK: 'SAVE_BACK'
+  ANSWER_SHOW: 'ANSWER_SHOW'
 };
 
-export function showFormMsg(showForm) {
-  return {
-    type: MSGS.SHOW_FORM,
-    showForm,
-  };
-}
+const showFormMsg = showForm => ({  
+  type: MSGS.SHOW_FORM,
+  showForm
+});
 
-export function frontInputMsg(description) {
-  return {
-    type: MSGS.FRONT_INPUT,
-    description,
-  };
-}
+const frontInputMsg = description => ({  
+  type: MSGS.DESCRIPTION_INPUT,
+  description
+});
 
-export function backInputMsg(back) {
-  return {
-    type: MSGS.BACK_INPUT,
-    back,
-  };
-}
+const backInputMsg = back => ({  
+  type: MSGS.ANSWER_INPUT,
+  back
+});
 
-export const saveFrontMsg = { type: MSGS.SAVE_FRONT };
-export const saveBackMsg = { type: MSGS.SAVE_BACK };
+const saveCardMsg = { type: MSGS.SAVE_CARD };
 
-export function deleteCardMsg(id) {
+const deleteCardMsg = id => ({
+  type: MSGS.DELETE_CARD,
+  id
+});
+
+const showAnswer = (id, showAnswer = "", changeTextStatus = 1, changeddescription = "", changedAnswer = "") => {
+  if (changedAnswer=== "") {
+    return {
+      type: MSGS.ANSWER_SHOW,
+      id,
+      showAnswer,
+      changeTextStatus,
+      changedValue: changeddescription,
+      changeType: 1
+    };
+  } 
   return {
-    type: MSGS.DELETE_CARD,
+    type: MSGS.ANSWER_SHOW,
     id,
+    showAnswer,
+    changeTextStatus,
+    changedValue: changedAnswer,
+    changeType: 2
   };
-}
+};
 
-function update(msg, model) {
+const update = (msg, model) => {
   switch (msg.type) {
+    case MSGS.ANSWER_SHOW: {
+      const {id, showAnswer, changeTextStatus, changedValue, changeType} = msg;
+
+      const estimateData = showAnswer.split(' ');
+      const estimateText = estimateData[0];
+      const estimatescore = estimateData[1];
+      
+      const oneCard = R.filter(
+        card => card.id == id, model.cards
+      );
+      const neuValue = changedValue || '';
+      
+      const card = {
+        id: oneCard[oneCard.length - 1].id + 1, 
+        description: changeType === 1 ? neuValue : oneCard[0].description, 
+        back: changeType === 2 ? neuValue : oneCard[0].back, 
+        toggle: changeTextStatus, 
+        answerStatus: estimateText, 
+        score: estimatescore
+      };
+      const cards = [...model.cards, card];
+      return {
+        ...model, 
+        cards, 
+        nextId: card.id, 
+        description: '',
+        back: 0,
+        showForm: false,
+        toggle: changeTextStatus,
+        answerStatus: ""
+      };
+    }
     case MSGS.SHOW_FORM: {
       const { showForm } = msg;
-      return { ...model, showForm, description: '', };
+      return { ...model, showForm, description: '', back: 0 };
     }
-    case MSGS.FRONT_INPUT: {
+    case MSGS.DESCRIPTION_INPUT: {
       const { description } = msg;
       return { ...model, description };
     }
-    case MSGS.BACK_INPUT: {
-      const { back } = msg;
+    case MSGS.ANSWER_INPUT: {
+      const back = R.pipe( 
+        R.defaultTo(0),
+      )(msg.back);
       return { ...model, back };
     }
-    case MSGS.SAVE_FRONT: {
-      const updatedModel = add(msg, model);
-      return updatedModel;
-    }
-    case MSGS.SAVE_BACK: {
-      const updatedModel = add(msg, model);
+    case MSGS.SAVE_CARD: {
+      const updatedModel = add(model);
       return updatedModel;
     }
     case MSGS.DELETE_CARD: {
       const { id } = msg;
       const cards = R.filter(
-        card => card.id !== id
-      , model.cards);
+        card => card.id !== id, model.cards
+      );
       return { ...model, cards };
-    }
-    case MSGS.UPDATE_BACK: {
-      const { description } = msg;
-      return { ...model, description };
     }
   }
   return model;
-}
+};
 
-function add(msg, model) {
-  const { nextId, description, back } = model;
-  const card = { id: nextId, description, back };
-  const cards = [...model.cards, card]
+const add = model => {
+  const { nextId, description, back, toggle } = model;
+  const card = { id: nextId + 1, description, back, toggle:0};
+  const cards = [...model.cards, card];
   return {
     ...model,
     cards,
     nextId: nextId + 1,
     description: '',
-    back: '',
+    back: 0,
     showForm: false,
+    toggle: 0,
+    score: 0
   };
-}
+};
 
-export default update;
+module.exports = {update, MSGS, add, showFormMsg, frontInputMsg, backInputMsg, saveCardMsg, deleteCardMsg, showAnswer};
