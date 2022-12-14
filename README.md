@@ -2,6 +2,7 @@
 Quellen:
 - https://tailwindcss.com/docs/installation
 - https://github.com/SwitzerChees/modul323-weatherapp
+- meine eigene Übungen (VS Code)
 - Hilfestellung durch Matvej Levantsou (Mittwoch, der 14.12.2022 um 22:00 Uhr)
 
 
